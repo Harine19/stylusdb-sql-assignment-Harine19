@@ -24,6 +24,7 @@ function parseQuery(query) {
     // Parse the SELECT part
     const selectRegex = /^SELECT\s(.+?)\sFROM\s(.+)/i;
     const selectMatch = selectPart.match(selectRegex);
+
     if (!selectMatch) {
         throw new Error('Invalid SELECT format');
     }
@@ -52,18 +53,20 @@ function parseQuery(query) {
         whereClauses = parseWhereClause(whereClause);
     }
 
+    
     return {
-        fields: fields.split(',').map(field => field.trim()),
-        table: table.trim(),
-        whereClauses,
-        joinTable,
-        joinCondition
-    };
+            fields: fields.split(',').map(field => field.trim()),
+            table: table.trim(),
+            whereClauses,
+            joinTable,
+            joinCondition
+        };
+    
 }
 
 function parseWhereClause(whereString) {
     const conditionRegex = /(.*?)(=|!=|>|<|>=|<=)(.*)/;
-    return whereString.split(/\s(?:AND|OR)\s/i).map(conditionString => {
+    return whereString.split(/ AND | OR /i).map(conditionString => {
         const match = conditionString.match(conditionRegex);
         if (match) {
             const [, field, operator, value] = match;

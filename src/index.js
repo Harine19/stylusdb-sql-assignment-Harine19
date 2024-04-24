@@ -5,45 +5,42 @@ const readCSV = require('./csvReader');
 
 async function executeSELECTQuery(query) {
     const { fields, table, whereClauses, joinTable, joinCondition } = parseQuery(query);
-let data = await readCSV(`${table}.csv`);
+    let data = await readCSV(`${table}.csv`);
 
-    // Apply WHERE clause filtering
+    // Perform INNER JOIN if specified
+if (joinTable && joinCondition) {
+    const joinData = await readCSV(`${joinTable}.csv`);
+    data = data.flatMap(mainRow => {
+        return joinData
+            .filter(joinRow => {
+                const mainValue = mainRow[joinCondition.left.split('.')[1]];
+                const joinValue = joinRow[joinCondition.right.split('.')[1]];
+                return mainValue === joinValue;
+            })
+            .map(joinRow => {
+                return fields.reduce((acc, field) => {
+                    const [tableName, fieldName] = field.split('.');
+                    acc[field] = tableName === table ? mainRow[fieldName] : joinRow[fieldName];
+                    return acc;
+                }, {});
+            });
+    });
+}
+
     const filteredData = whereClauses.length > 0
     ? data.filter(row => whereClauses.every(clause => evaluateCondition(row, clause)))
     : data;
 
     // Select the specified fields
-    return // src/index.js at executeSELECTQuery
-
-    filteredData.map(row => {
+    return filteredData.map(row => {
         const selectedRow = {};
         fields.forEach(field => {
-            // Assuming 'field' is just the column name without table prefix
             selectedRow[field] = row[field];
         });
         return selectedRow;
     });
-    if (joinTable && joinCondition) {
-        const joinData = await readCSV(`${joinTable}.csv`);
-        data = data.flatMap(mainRow => {
-            return joinData
-                .filter(joinRow => {
-                    const mainValue = mainRow[joinCondition.left.split('.')[1]];
-                    const joinValue = joinRow[joinCondition.right.split('.')[1]];
-                    return mainValue === joinValue;
-                })
-                .map(joinRow => {
-                    return fields.reduce((acc, field) => {
-                        const [tableName, fieldName] = field.split('.');
-                        acc[field] = tableName === table ? mainRow[fieldName] : joinRow[fieldName];
-                        return acc;
-                    }, {});
-                });
-        });
-    }
 }
 
-// src/index.js
 function evaluateCondition(row, clause) {
     const { field, operator, value } = clause;
     switch (operator) {

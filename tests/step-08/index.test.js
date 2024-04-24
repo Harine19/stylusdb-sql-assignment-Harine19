@@ -14,11 +14,13 @@ test('Parse SQL Query', () => {
     const query = 'SELECT id, name FROM student';
     const parsed = parseQuery(query);
     expect(parsed).toEqual({
-        fields: ['id', 'name'],
-        table: 'student',
-        whereClauses: [],
+        fields: [
+            'id','name'
+        ],
         joinCondition: null,
-        joinTable: null
+        joinTable:null,
+        table: 'student',
+        whereClauses:[],
     });
 });
 
@@ -37,6 +39,8 @@ test('Parse SQL Query with WHERE Clause', () => {
     const parsed = parseQuery(query);
     expect(parsed).toEqual({
         fields: ['id', 'name'],
+        joinCondition: null,
+        joinTable: null,
         table: 'student',
         whereClauses: [{
             "field": "age",
@@ -62,16 +66,19 @@ test('Parse SQL Query with Multiple WHERE Clauses', () => {
     const parsed = parseQuery(query);
     expect(parsed).toEqual({
         fields: ['id', 'name'],
+        joinCondition: null,
+        joinTable: null,
         table: 'student',
         whereClauses: [{
             "field": "age",
             "operator": "=",
             "value": "30",
-        }, {
-            "field": "name",
-            "operator": "=",
-            "value": "John",
-        }],
+        },
+    {
+        "field": "name",
+        "operator": "=",
+        "value": "John",
+    }],
         joinCondition: null,
         joinTable: null
     });
@@ -106,7 +113,8 @@ test('Parse SQL Query with INNER JOIN', async () => {
         table: 'student',
         whereClauses: [],
         joinTable: 'enrollment',
-        joinCondition: { left: 'student.id', right: 'enrollment.student_id' }
+        joinCondition: { 
+            left: 'student.id', right: 'enrollment.student_id' }
     })
 });
 
@@ -115,11 +123,17 @@ test('Parse SQL Query with INNER JOIN and WHERE Clause', async () => {
     const result = await parseQuery(query);
     expect(result).toEqual({
         fields: ['student.name', 'enrollment.course'],
-        table: 'student',
-        whereClauses: [{ field: 'student.age', operator: '>', value: '20' }],
+        joinCondition: { 
+            left: 'student.id', 
+            right: 'enrollment.student_id' },
         joinTable: 'enrollment',
-        joinCondition: { left: 'student.id', right: 'enrollment.student_id' }
-    })
+        table: 'student',
+        whereClauses: [{
+            "field":"student.age",
+            "operator":">",
+            "value":"20",
+        },],
+        })
 });
 
 test('Execute SQL Query with INNER JOIN', async () => {
