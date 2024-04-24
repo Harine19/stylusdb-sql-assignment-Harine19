@@ -1,5 +1,4 @@
 // src/csvReader.js
-//implementing the read csv function
 
 const fs = require('fs');
 const csv = require('csv-parser');
