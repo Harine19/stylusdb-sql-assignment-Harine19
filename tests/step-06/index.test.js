@@ -17,7 +17,6 @@ test('Parse SQL Query', () => {
         fields: ['id', 'name'],
         table: 'sample',
         whereClauses: []
-        //whereClause: null
     });
 });
 
@@ -42,7 +41,6 @@ test('Parse SQL Query with WHERE Clause', () => {
           operator: "=",
           value: "25",
         }],
-      
     });
 });
 
