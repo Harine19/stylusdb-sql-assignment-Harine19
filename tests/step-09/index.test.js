@@ -1,6 +1,6 @@
 const {readCSV} = require('../../src/csvReader');
 const {parseSelectQuery} = require('../../src/queryParser');
-const {executeSELECTQuery} = require('../../src/index');
+const {executeSELECTQuery} = require('../../src/queryExecutor');
 
 test('Read CSV File', async () => {
     const data = await readCSV('./student.csv');
@@ -174,20 +174,7 @@ test('Execute SQL Query with INNER JOIN', async () => {
 test('Execute SQL Query with INNER JOIN and a WHERE Clause', async () => {
     const query = 'SELECT student.name, enrollment.course, student.age FROM student INNER JOIN enrollment ON student.id = enrollment.student_id WHERE student.age > 25';
     const result = await executeSELECTQuery(query);
-    /*
-    result =  [
-      {
-        'student.name': 'John',
-        'enrollment.course': 'Mathematics',
-        'student.age': '30'
-      },
-      {
-        'student.name': 'John',
-        'enrollment.course': 'Physics',
-        'student.age': '30'
-      }
-    ]
-    */
+    
     expect(result.length).toEqual(2);
     // toHaveProperty is not working here due to dot in the property name
     expect(result[0]).toEqual(expect.objectContaining({

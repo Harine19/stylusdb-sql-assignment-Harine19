@@ -1,53 +1,33 @@
-const child_process = require('child_process');
-const path = require('path');
+const { executeINSERTQuery } = require('../../src/queryExecutor');
+const { readCSV, writeCSV } = require('../../src/csvReader');
+const fs = require('fs');
 
-test('DISTINCT with Multiple Columns via CLI', (done) => {
-    const cliPath = path.join(__dirname, '..', 'src', 'cli.js');
-    const cliProcess = child_process.spawn('node', [cliPath]);
+// Helper function to create grades.csv with initial data
+async function createGradesCSV() {
+    const initialData = [
+        { student_id: '1', course: 'Mathematics', grade: 'A' },
+        { student_id: '2', course: 'Chemistry', grade: 'B' },
+        { student_id: '3', course: 'Mathematics', grade: 'C' }
+    ];
+    await writeCSV('grades.csv', initialData);
+}
 
-    let outputData = "";
-    cliProcess.stdout.on('data', (data) => {
-        outputData += data.toString();
-    });
+// Test to INSERT a new grade and verify
+test('Execute INSERT INTO Query for grades.csv', async () => {
+    // Create grades.csv with initial data
+    await createGradesCSV();
 
-    cliProcess.on('exit', () => {
-        // Define a regex pattern to extract the JSON result
-        const cleanedOutput = outputData.replace(/\s+/g, ' ');
+    // Execute INSERT statement
+    const insertQuery = "INSERT INTO grades (student_id, course, grade) VALUES ('4', 'Physics', 'A')";
+    await executeINSERTQuery(insertQuery);
 
-        const resultRegex = /Result: (\[.+\])/s;
-        const match = cleanedOutput.match(resultRegex);
-        // Fix JSON outputput
-        match[1] = match[1].replace(/'/g, '"').replace(/(\w+):/g, '"$1":');
+    // Verify the new entry
+    const updatedData = await readCSV('grades.csv');
+    const newEntry = updatedData.find(row => row.student_id === '4' && row.course === 'Physics');
+    console.log(updatedData)
+    expect(newEntry).toBeDefined();
+    expect(newEntry.grade).toEqual('A');
 
-        if (match && match[1]) {
-          console.log(match[1]);
-          console.log(typeof match[1])
-            // Parse the captured JSON string
-            // const results = JSON.parse(match[1]);
-
-            // Validation logic
-            expect(JSON.parse(match[1])).toEqual //("[ { \"student_id\": \"1\", \"course\": \"Mathematics\" }, { \"student_id\": \"1\", \"course\": \"Physics\" }, { \"student_id\": \"2\", \"course\": \"Chemistry\" }, { \"student_id\": \"3\", \"course\": \"Mathematics\" }, { \"student_id\": \"5\", \"course\": \"Biology\" } ]")
-            ([
-                { student_id: '1', course: 'Mathematics' },
-                { student_id: '1', course: 'Physics' },
-                { student_id: '2', course: 'Chemistry' },
-                { student_id: '3', course: 'Mathematics' },
-                { student_id: '5', course: 'Biology' },
-            ]);
-            console.log("Test passed successfully");
-        } else {
-          done()
-          throw new Error('Failed to parse CLI output');
-        }
-
-        done();
-    });
-
-    // Introduce a delay before sending the query
-    setTimeout(() => {
-        cliProcess.stdin.write("SELECT DISTINCT student_id, course FROM enrollment\n");
-        setTimeout(() => {
-            cliProcess.stdin.write("exit\n");
-        }, 1000); // 1 second delay
-    }, 1000); // 1 second delay
+    // Cleanup: Delete grades.csv
+    fs.unlinkSync('grades.csv');
 });

@@ -196,4 +196,5 @@ function parseDeleteQuery(query){
     };
 }
 
+
 module.exports = {parseSelectQuery,parseJoinClause,parseINSERTQuery,parseDeleteQuery};
